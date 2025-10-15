@@ -63,7 +63,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <PreprocessorDefinitions>_CONSOLE;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -104,12 +104,33 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="lexer.l">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"C:\Users\shock\Desktop\flex\win_flex.exe" --nounistd -o "C:\Users\shock\source\repos\practicaflex\out\lex.yy.c" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generando lex.yy.c desde lexer.l</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\shock\source\repos\practicaflex\out\lex.yy.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"C:\Users\shock\Desktop\flex\win_flex.exe" --nounistd -o "C:\Users\shock\source\repos\practicaflex\out\lex.yy.c" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generando lex.yy.c desde lexer.l</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\shock\source\repos\practicaflex\out\lex.yy.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"C:\Users\shock\Desktop\flex\win_flex.exe" --nounistd -o "C:\Users\shock\source\repos\practicaflex\out\lex.yy.c" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generando lex.yy.c desde lexer.l</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\shock\source\repos\practicaflex\out\lex.yy.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"C:\Users\shock\Desktop\flex\win_flex.exe" --nounistd -o "C:\Users\shock\source\repos\practicaflex\out\lex.yy.c" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generando lex.yy.c desde lexer.l</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\shock\source\repos\practicaflex\out\lex.yy.c</Outputs>
+    </CustomBuild>
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <None Include="README.md" />
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="out\lex.yy.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
