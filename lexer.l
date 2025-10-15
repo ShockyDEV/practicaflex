@@ -19,6 +19,12 @@ int longest_selector_len = 0;
 char longest_selector[4096] = {0};
 char last_prop[128] = {0};
 
+char longest_value_prop[128] = {0};
+char longest_value_text[4096] = {0};
+int longest_value_len = -1;
+char current_value_buf[4096] = {0};
+int current_value_len = 0;
+
 static void finalize_selector() {
     if (selector_len == 0) return;
     int start = 0;
@@ -55,6 +61,11 @@ WS      [ \t\r\n]+
                     if (strncmp(last_prop, "margin", 6) == 0) {
                         count_margins++;
                     }
+                    if (current_value_len > longest_value_len) {
+                        longest_value_len = current_value_len;
+                        strncpy(longest_value_prop, last_prop, sizeof(longest_value_prop) - 1);
+                        strncpy(longest_value_text, current_value_buf, sizeof(longest_value_text) - 1);
+                    }
                     after_colon = 0;
                     last_prop[0] = '\0';
                 }
@@ -63,6 +74,8 @@ WS      [ \t\r\n]+
 ":"         {
                 if(in_rule) {
                     after_colon = 1;
+                    current_value_len = 0;
+                    current_value_buf[0] = '\0';
                 } else {
                     if (selector_len < (int)sizeof(selector_buf) - 1) selector_buf[selector_len++] = ':';
                 }
@@ -71,6 +84,11 @@ WS      [ \t\r\n]+
 "url("      {
                 if(in_rule && after_colon) {
                     count_urls++;
+                    const char* text = "url(";
+                    if (current_value_len + 4 < sizeof(current_value_buf) -1) {
+                        memcpy(current_value_buf + current_value_len, text, 4);
+                        current_value_len += 4;
+                    }
                 } else if (!in_rule) {
                     const char* text = "url(";
                     if (selector_len + 4 < sizeof(selector_buf) -1) {
@@ -83,6 +101,11 @@ WS      [ \t\r\n]+
 {IDENT}     {
                 if (in_rule && !after_colon) {
                     strncpy(last_prop, yytext, sizeof(last_prop) - 1);
+                } else if (in_rule && after_colon) {
+                    if (current_value_len + yyleng < sizeof(current_value_buf) - 1) {
+                        memcpy(current_value_buf + current_value_len, yytext, yyleng);
+                        current_value_len += yyleng;
+                    }
                 } else if (!in_rule) {
                     if (selector_len + yyleng < sizeof(selector_buf) - 1) {
                         memcpy(selector_buf + selector_len, yytext, yyleng);
@@ -93,8 +116,10 @@ WS      [ \t\r\n]+
 
 {WS}        {
                 if (!in_rule) {
-                    if (selector_len < sizeof(selector_buf) - 1) {
-                       selector_buf[selector_len++] = ' ';
+                    if (selector_len < sizeof(selector_buf) - 1) selector_buf[selector_len++] = ' ';
+                } else if (in_rule && after_colon) {
+                    if (current_value_len < sizeof(current_value_buf) - 1) {
+                       current_value_buf[current_value_len++] = ' ';
                     }
                 }
             }
@@ -103,6 +128,10 @@ WS      [ \t\r\n]+
                 if (!in_rule) {
                     if (selector_len < sizeof(selector_buf) - 1) {
                        selector_buf[selector_len++] = yytext[0];
+                    }
+                } else if (in_rule && after_colon) {
+                    if (current_value_len < sizeof(current_value_buf) - 1) {
+                       current_value_buf[current_value_len++] = yytext[0];
                     }
                 }
             }
