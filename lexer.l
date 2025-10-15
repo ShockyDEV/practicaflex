@@ -1,3 +1,7 @@
+/*
+ * Autor: Enrique González
+ * Práctica de Flex
+ */
 %option noyywrap
 %option yylineno
 
@@ -10,6 +14,7 @@ int count_rules = 0;
 int count_properties = 0;
 int count_margins = 0;
 int count_urls = 0;
+int count_colors = 0;
 
 int in_rule = 0;
 int after_colon = 0;
@@ -42,15 +47,29 @@ static void finalize_selector() {
     }
     selector_len = 0;
 }
+
+static int is_named_color(const char* s) {
+    const char* colors[] = {
+        "black", "gray", "silver", "white", "maroon", "red", "purple", "green",
+        "lime", "olive", "yellow", "navy", "blue", "teal", "aqua", "orange", NULL
+    };
+    for (int i = 0; colors[i] != NULL; i++) {
+        if (strcmp(s, colors[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 %}
 
-IDENT   [a-zA-Z_][a-zA-Z0-9_-]*
-COMMENT (\/\*([^*]|\*+[^*/])*\*+\/)
-WS      [ \t\r\n]+
+HEX_COLOR       #([a-fA-F0-9]{3}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})
+IDENT           [a-zA-Z_][a-zA-Z0-9_-]*
+COMMENT         (\/\*([^*]|\*+[^*/])*\*+\/)
+WS              [ \t\r\n]+
 
 %%
 
-{COMMENT}   { }
+{COMMENT}   { /* Ignored */ }
 
 "{"         { finalize_selector(); in_rule = 1; after_colon = 0; count_rules++; }
 "}"         { in_rule = 0; after_colon = 0; }
@@ -81,6 +100,16 @@ WS      [ \t\r\n]+
                 }
             }
 
+{HEX_COLOR} {
+                if(in_rule && after_colon) {
+                    count_colors++;
+                    if (current_value_len + yyleng < sizeof(current_value_buf) - 1) {
+                        memcpy(current_value_buf + current_value_len, yytext, yyleng);
+                        current_value_len += yyleng;
+                    }
+                }
+            }
+
 "url("      {
                 if(in_rule && after_colon) {
                     count_urls++;
@@ -102,6 +131,9 @@ WS      [ \t\r\n]+
                 if (in_rule && !after_colon) {
                     strncpy(last_prop, yytext, sizeof(last_prop) - 1);
                 } else if (in_rule && after_colon) {
+                    if(is_named_color(yytext)) {
+                        count_colors++;
+                    }
                     if (current_value_len + yyleng < sizeof(current_value_buf) - 1) {
                         memcpy(current_value_buf + current_value_len, yytext, yyleng);
                         current_value_len += yyleng;
@@ -137,3 +169,4 @@ WS      [ \t\r\n]+
             }
 
 %%
+

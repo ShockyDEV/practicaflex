@@ -1,3 +1,7 @@
+/*
+ * Autor: Enrique González
+ * Práctica de Flex
+ */
 #include <stdio.h>
 
 extern int yylex(void);
@@ -7,9 +11,9 @@ extern int count_rules;
 extern int count_properties;
 extern int count_margins;
 extern int count_urls;
+extern int count_colors;
 extern int longest_selector_len;
 extern char longest_selector[];
-
 extern int longest_value_len;
 extern char longest_value_prop[];
 extern char longest_value_text[];
@@ -28,11 +32,12 @@ int main(int argc, char** argv) {
     printf("Comprobando el archivo CSS...\n");
     yylex();
 
-    printf("Resultados del analisis:\n");;
+    printf("Resultados del analisis:\n");
     printf("Reglas encontradas: %d\n", count_rules);
     printf("Propiedades totales: %d\n", count_properties);
     printf("Propiedades de margen: %d\n", count_margins);
     printf("Propiedades de tipo URL: %d\n", count_urls);
+    printf("Especificaciones de color: %d\n", count_colors);
     printf("Selector mas largo (%d caracteres): %s\n", longest_selector_len, longest_selector_len ? longest_selector : "N/A");
 
     if (longest_value_len > 0) {
