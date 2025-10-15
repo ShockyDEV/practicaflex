@@ -1,41 +1,58 @@
-/*
- * Autor: Enrique González
- * Práctica de Flex
+/**
+
+ * Fichero:     lexer.l
+ * Autor:       Enrique González
+ * Descripción: Analizador léxico para hojas de estilo CSS, implementado con Flex.
+ * Definimos las reglas para identificar y contar diferentes
+ * elementos de un archivo CSS, como reglas, propiedades, márgenes,
+ * URLs y colores (formato HEX y  nombre).
  */
+
 %option noyywrap
 %option yylineno
 
 %{
-#define _CRT_SECURE_NO_WARNINGS
+
+#define _CRT_SECURE_NO_WARNINGS // Desactivo advertencias de seguridad de MSVC.
 #include <stdio.h>
 #include <string.h>
 
-int count_rules = 0;
-int count_properties = 0;
-int count_margins = 0;
-int count_urls = 0;
-int count_colors = 0;
+//  Variables Globales
+int count_rules = 0;        // Nº total de reglas (bloques {}).
+int count_properties = 0;   // Nº total de propiedades (declaraciones ;).
+int count_margins = 0;      // Nº de propiedades de tipo 'margin'.
+int count_urls = 0;         // Nº de valores que contienen 'url('.
+int count_colors = 0;       // Nº de colores (HEX o por nombre).
 
-int in_rule = 0;
-int after_colon = 0;
-char selector_buf[4096] = {0};
-int selector_len = 0;
-int longest_selector_len = 0;
-char longest_selector[4096] = {0};
-char last_prop[128] = {0};
+//  Buffers y banderas de estado 
+int in_rule = 0;        // Bandera: 1 si estamos dentro de una regla {}, 0 si no.
+int after_colon = 0;    // Bandera: 1 si estamos leyendo el valor de una propiedad.
 
-char longest_value_prop[128] = {0};
-char longest_value_text[4096] = {0};
-int longest_value_len = -1;
-char current_value_buf[4096] = {0};
-int current_value_len = 0;
+//  Lógica del selector más Largo 
+char selector_buf[4096] = {0};      // Buffer temporal para el selector actual.
+int selector_len = 0;               // Longitud del selector en el buffer.
+int longest_selector_len = 0;       // Longitud del selector más largo encontrado.
+char longest_selector[4096] = {0};  // Texto del selector más largo.
+char last_prop[128] = {0};          // Nombre de la última propiedad leída.
 
+//  Lógica para el valor de propiedad más Largo 
+char longest_value_prop[128] = {0};     // Nombre de la propiedad con el valor más largo.
+char longest_value_text[4096] = {0};    // Texto del valor más largo.
+int longest_value_len = -1;             // Longitud del valor más largo.
+char current_value_buf[4096] = {0};     // Buffer para el valor actual.
+int current_value_len = 0;              // Longitud del valor actual.
+
+/**
+ * @brief Procesa y guarda el selector más largo encontrado hasta el momento.
+ * Limpia los espacios en blanco al inicio y al final del selector.
+ */
 static void finalize_selector() {
     if (selector_len == 0) return;
     int start = 0;
     while (start < selector_len && (selector_buf[start] == ' ' || selector_buf[start] == '\t' || selector_buf[start] == '\n')) start++;
     int end = selector_len;
     while (end > start && (selector_buf[end - 1] == ' ' || selector_buf[end - 1] == '\t' || selector_buf[end - 1] == '\n')) end--;
+    
     int current_len = end - start;
     if (current_len > longest_selector_len) {
         longest_selector_len = current_len;
@@ -45,9 +62,14 @@ static void finalize_selector() {
         memcpy(longest_selector, selector_buf + start, longest_selector_len);
         longest_selector[longest_selector_len] = '\0';
     }
-    selector_len = 0;
+    selector_len = 0; // Resetea el buffer para el siguiente selector.
 }
 
+/**
+ * @brief Comprueba si una cadena de texto corresponde a un color CSS por nombre.
+ * @param s La cadena a comprobar.
+ * @return 1 si es un color por nombre, 0 en caso contrario.
+ */
 static int is_named_color(const char* s) {
     const char* colors[] = {
         "black", "gray", "silver", "white", "maroon", "red", "purple", "green",
@@ -60,16 +82,19 @@ static int is_named_color(const char* s) {
     }
     return 0;
 }
+
 %}
 
+/*  Definiciones Regulares de Flex  */
 HEX_COLOR       #([a-fA-F0-9]{3}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})
 IDENT           [a-zA-Z_][a-zA-Z0-9_-]*
 COMMENT         (\/\*([^*]|\*+[^*/])*\*+\/)
 WS              [ \t\r\n]+
 
+/*  Reglas de Flex  */
 %%
 
-{COMMENT}   { /* Ignored */ }
+{COMMENT}   { /* Ignorar comentarios */ }
 
 "{"         { finalize_selector(); in_rule = 1; after_colon = 0; count_rules++; }
 "}"         { in_rule = 0; after_colon = 0; }
@@ -169,4 +194,3 @@ WS              [ \t\r\n]+
             }
 
 %%
-
